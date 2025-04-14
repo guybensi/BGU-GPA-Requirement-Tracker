@@ -7,6 +7,10 @@ class CourseTrackerUI:
         self.conn = sqlite3.connect(db_name)
         if "user_courses" not in st.session_state:
             st.session_state.user_courses = []
+        if "selected_index" not in st.session_state:
+            st.session_state.selected_index = None
+        if "edit_mode" not in st.session_state:
+            st.session_state.edit_mode = False
 
     def load_courses(self):
         query = "SELECT course_name, course_number, credit_points FROM courses"
@@ -55,26 +59,44 @@ class CourseTrackerUI:
         if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
             df = pd.DataFrame(st.session_state.user_courses)
-            df["Delete"] = ["❌"] * len(df)
-            edited_df = st.data_editor(
-                df,
-                num_rows="dynamic",
-                use_container_width=True,
-                key="course_editor",
-                disabled=["Delete"]
-            )
+            selected_row = st.selectbox("Select a course to edit/delete:", df.index, format_func=lambda x: f"{df.loc[x, 'course_name']} ({df.loc[x, 'course_number']})")
 
-            delete_index = None
-            for i, row in df.iterrows():
-                delete_key = f"delete_button_{i}"
-                if st.button("❌", key=delete_key):
-                    delete_index = i
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("✏️ Edit Selected"):
+                    st.session_state.selected_index = selected_row
+                    st.session_state.edit_mode = True
+            with col2:
+                if st.button("🗑️ Delete Selected"):
+                    st.session_state.user_courses.pop(selected_row)
+                    st.experimental_rerun()
 
-            if delete_index is not None:
-                st.session_state.user_courses.pop(delete_index)
-                st.experimental_rerun()
+            if st.session_state.edit_mode and st.session_state.selected_index is not None:
+                course = st.session_state.user_courses[st.session_state.selected_index]
+                st.markdown("### ✏️ Edit Course")
+                new_name = st.text_input("Course Name", value=course["course_name"])
+                new_number = st.text_input("Course Number", value=course["course_number"])
+                new_credits = st.number_input("Credit Points", value=float(course["credit_points"]))
+                new_english = st.checkbox("Taught in English", value=course["english"])
+                new_binary = st.checkbox("Binary Pass", value=course["binary"])
+                new_grade = None
+                if not new_binary:
+                    new_grade = st.number_input("Grade (0-100)", min_value=0, max_value=100, value=course["grade"])
 
-            st.session_state.user_courses = edited_df.drop(columns=["Delete"]).to_dict(orient="records")
+                if st.button("💾 Save Changes"):
+                    st.session_state.user_courses[st.session_state.selected_index] = {
+                        "course_name": new_name,
+                        "course_number": new_number,
+                        "credit_points": new_credits,
+                        "english": new_english,
+                        "binary": new_binary,
+                        "grade": new_grade
+                    }
+                    st.session_state.edit_mode = False
+                    st.session_state.selected_index = None
+                    st.experimental_rerun()
+
+            st.dataframe(df.drop(columns=[]))
 
             if st.button("📊 Calculate Summary"):
                 self.display_summary()
