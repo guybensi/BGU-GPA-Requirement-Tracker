@@ -21,6 +21,11 @@ class CourseTrackerUI:
 
         st.subheader("➕ Add a Course")
         selected_course = st.selectbox("Choose a course:", course_names)
+
+        if selected_course not in course_names:
+            st.error("❌ Course not found in the database.")
+            return
+
         course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
 
         course_number = course_info['course_number']
@@ -35,18 +40,34 @@ class CourseTrackerUI:
             received_grade = st.number_input("Grade (0-100):", min_value=0, max_value=100, value=85)
 
         if st.button("Add Course"):
-            st.session_state.user_courses.append({
-                "course_name": selected_course,
-                "course_number": course_number,
-                "credit_points": updated_credits,
-                "english": taught_in_english,
-                "binary": binary_pass,
-                "grade": received_grade
-            })
+            if not binary_pass and (received_grade < 0 or received_grade > 100):
+                st.error("❌ Invalid grade. Must be between 0 and 100.")
+            else:
+                st.session_state.user_courses.append({
+                    "course_name": selected_course,
+                    "course_number": course_number,
+                    "credit_points": updated_credits,
+                    "english": taught_in_english,
+                    "binary": binary_pass,
+                    "grade": received_grade
+                })
 
         if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
             edited_df = pd.DataFrame(st.session_state.user_courses)
+
+            # אפשרות למחיקה באמצעות כפתור לכל שורה
+            for i, row in edited_df.iterrows():
+                col1, col2 = st.columns([8, 1])
+                with col1:
+                    st.write(row.to_dict())
+                with col2:
+                    if st.button("❌", key=f"delete_{i}"):
+                        st.session_state.user_courses.pop(i)
+                        st.experimental_rerun()
+
+            # עדכון הטבלה לאחר עריכות
+            st.markdown("### ✏️ Edit Courses")
             edited_df = st.data_editor(edited_df, num_rows="dynamic", use_container_width=True, key="course_editor")
             st.session_state.user_courses = edited_df.to_dict(orient="records")
 
