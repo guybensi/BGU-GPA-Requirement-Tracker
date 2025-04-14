@@ -5,7 +5,8 @@ import pandas as pd
 class CourseTrackerUI:
     def __init__(self, db_name="courses.db"):
         self.conn = sqlite3.connect(db_name)
-        self.user_courses = []
+        if "user_courses" not in st.session_state:
+            st.session_state.user_courses = []
 
     def load_courses(self):
         query = "SELECT course_name, course_number, credit_points FROM courses"
@@ -18,7 +19,7 @@ class CourseTrackerUI:
         course_df = self.load_courses()
         course_names = course_df['course_name'].tolist()
 
-        st.subheader("Add a Course")
+        st.subheader("➕ Add a Course")
         selected_course = st.selectbox("Choose a course:", course_names)
         course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
 
@@ -31,10 +32,10 @@ class CourseTrackerUI:
         received_grade = None
 
         if not binary_pass:
-            received_grade = st.slider("Grade (0-100):", 0, 100, 85)
+            received_grade = st.number_input("Grade (0-100):", min_value=0, max_value=100, value=85)
 
         if st.button("Add Course"):
-            self.user_courses.append({
+            st.session_state.user_courses.append({
                 "course_name": selected_course,
                 "course_number": course_number,
                 "credit_points": updated_credits,
@@ -43,15 +44,17 @@ class CourseTrackerUI:
                 "grade": received_grade
             })
 
-        if self.user_courses:
+        if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
-            st.dataframe(pd.DataFrame(self.user_courses))
+            edited_df = pd.DataFrame(st.session_state.user_courses)
+            edited_df = st.data_editor(edited_df, num_rows="dynamic", use_container_width=True, key="course_editor")
+            st.session_state.user_courses = edited_df.to_dict(orient="records")
 
             if st.button("📊 Calculate Summary"):
                 self.display_summary()
 
     def display_summary(self):
-        df = pd.DataFrame(self.user_courses)
+        df = pd.DataFrame(st.session_state.user_courses)
 
         total_credits = df['credit_points'].sum()
         english_courses = df[df['english'] == True]
