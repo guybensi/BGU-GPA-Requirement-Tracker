@@ -59,17 +59,21 @@ class CourseTrackerUI:
         if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
             df = pd.DataFrame(st.session_state.user_courses)
-            selected_row = st.selectbox("Select a course to edit/delete:", df.index, format_func=lambda x: f"{df.loc[x, 'course_name']} ({df.loc[x, 'course_number']})")
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✏️ Edit Selected"):
-                    st.session_state.selected_index = selected_row
-                    st.session_state.edit_mode = True
-            with col2:
-                if st.button("🗑️ Delete Selected"):
-                    st.session_state.user_courses.pop(selected_row)
-                    st.experimental_rerun()
+            # תיבת סימון ליד כל קורס
+            selected_course_index = st.radio(
+                "Select a course:",
+                options=range(len(df)),
+                format_func=lambda i: f"{df.loc[i, 'course_name']} ({df.loc[i, 'course_number']})"
+            )
+
+            if st.button("Edit Selected Course"):
+                st.session_state.selected_index = selected_course_index
+                st.session_state.edit_mode = True
+
+            if st.button("Delete Selected Course"):
+                st.session_state.user_courses.pop(selected_course_index)
+                st.experimental_rerun()
 
             if st.session_state.edit_mode and st.session_state.selected_index is not None:
                 course = st.session_state.user_courses[st.session_state.selected_index]
@@ -96,7 +100,7 @@ class CourseTrackerUI:
                     st.session_state.selected_index = None
                     st.experimental_rerun()
 
-            st.dataframe(df.drop(columns=[]))
+            st.dataframe(df)
 
             if st.button("📊 Calculate Summary"):
                 self.display_summary()
