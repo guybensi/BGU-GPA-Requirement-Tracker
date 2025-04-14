@@ -60,20 +60,24 @@ class CourseTrackerUI:
             st.subheader("📘 Your Courses")
             df = pd.DataFrame(st.session_state.user_courses)
 
-            # תיבת סימון ליד כל קורס
-            selected_course_index = st.radio(
-                "Select a course:",
-                options=range(len(df)),
-                format_func=lambda i: f"{df.loc[i, 'course_name']} ({df.loc[i, 'course_number']})"
-            )
+            # יצירת תיבות סימון לבחירה לפי אינדקסים
+            selected_indices = []
+            for i, row in df.iterrows():
+                is_selected = st.checkbox(f"{row['course_name']} ({row['course_number']})", key=f"select_{i}")
+                if is_selected:
+                    selected_indices.append(i)
 
-            if st.button("Edit Selected Course"):
-                st.session_state.selected_index = selected_course_index
-                st.session_state.edit_mode = True
-
-            if st.button("Delete Selected Course"):
-                st.session_state.user_courses.pop(selected_course_index)
-                st.experimental_rerun()
+            if len(selected_indices) == 1:
+                selected_index = selected_indices[0]
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✏️ Edit Selected"):
+                        st.session_state.selected_index = selected_index
+                        st.session_state.edit_mode = True
+                with col2:
+                    if st.button("🗑️ Delete Selected"):
+                        st.session_state.user_courses.pop(selected_index)
+                        st.rerun()
 
             if st.session_state.edit_mode and st.session_state.selected_index is not None:
                 course = st.session_state.user_courses[st.session_state.selected_index]
