@@ -7,8 +7,8 @@ class CourseTrackerUI:
         self.conn = sqlite3.connect(db_name)
         if "user_courses" not in st.session_state:
             st.session_state.user_courses = []
-        if "edit_mode" not in st.session_state:
-            st.session_state.edit_mode = False
+        if "edit_index" not in st.session_state:
+            st.session_state.edit_index = None
 
     def load_courses(self):
         query = "SELECT course_name, course_number, credit_points FROM courses"
@@ -19,20 +19,23 @@ class CourseTrackerUI:
         st.title("🎓 BGU GPA & Requirement Tracker")
 
         course_df = self.load_courses()
-        course_names = course_df['course_name'].tolist()
+        course_names = course_df['course_name'].tolist() + ["קורס אחר"]
 
         st.subheader("➕ Add a Course")
         selected_course = st.selectbox("Choose a course:", course_names)
 
-        if selected_course not in course_names:
-            st.error("❌ Course not found in the database.")
+        if selected_course == "קורס אחר":
+            course_name = st.text_input("Enter course name")
+            course_number = st.text_input("Enter course number")
+            updated_credits = st.number_input("Credit points:", min_value=0.0, step=0.5)
+        elif selected_course in course_names:
+            course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
+            course_name = course_info['course_name']
+            course_number = course_info['course_number']
+            updated_credits = st.number_input("Credit points (you can modify if needed):", value=float(course_info['credit_points']))
+        else:
+            st.error("קורס זה לא מופיע, נסה להוסיף את 'קורס אחר' וערוך אותו בהתאם")
             return
-
-        course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
-
-        course_number = course_info['course_number']
-        default_credits = course_info['credit_points']
-        updated_credits = st.number_input("Credit points (you can modify if needed):", value=float(default_credits))
 
         taught_in_english = st.checkbox("Course taught in English")
         binary_pass = st.checkbox("Mark as Pass/Fail (Binary Pass)")
@@ -42,32 +45,44 @@ class CourseTrackerUI:
             received_grade = st.number_input("Grade (0-100):", min_value=0, max_value=100, value=85)
 
         if st.button("Add Course"):
-            if not binary_pass and (received_grade < 0 or received_grade > 100):
-                st.error("❌ Invalid grade. Must be between 0 and 100.")
+            if any(c['course_number'] == course_number for c in st.session_state.user_courses):
+                st.warning("הקורס כבר קיים ברשימתך")
             else:
                 st.session_state.user_courses.append({
-                    "course_name": selected_course,
+                    "course_name": course_name,
                     "course_number": course_number,
                     "credit_points": updated_credits,
                     "english": taught_in_english,
                     "binary": binary_pass,
                     "grade": received_grade
                 })
+                st.rerun()
 
         if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
             df = pd.DataFrame(st.session_state.user_courses)
 
+            selected_row = st.radio("Select a course to edit/delete:", options=df.index, format_func=lambda i: f"{df.loc[i, 'course_name']} ({df.loc[i, 'course_number']})")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🗑️ Delete Selected"):
+                    st.session_state.user_courses.pop(selected_row)
+                    st.rerun()
+            with col2:
+                if st.button("✏️ Edit Selected"):
+                    st.session_state.edit_index = selected_row
+
+            disabled_rows = [] if st.session_state.edit_index is not None else df.index.tolist()
             edited_df = st.data_editor(
                 df,
-                num_rows="dynamic",
-                use_container_width=True,
-                key="course_editor"
+                disabled=df.columns if st.session_state.edit_index is None else df.columns.difference(["course_name", "course_number", "credit_points", "english", "binary", "grade"]),
+                key="editable_table"
             )
 
             if st.button("💾 Save Changes"):
                 st.session_state.user_courses = edited_df.to_dict(orient="records")
-                st.success("Changes saved!")
+                st.session_state.edit_index = None
                 st.rerun()
 
             if st.button("📊 Calculate Summary"):
