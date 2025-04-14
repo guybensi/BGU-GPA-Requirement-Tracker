@@ -19,23 +19,19 @@ class CourseTrackerUI:
         st.title("🎓 BGU GPA & Requirement Tracker")
 
         course_df = self.load_courses()
-        course_names = course_df['course_name'].tolist() + ["קורס אחר"]
+        course_names = course_df['course_name'].tolist()
 
         st.subheader("➕ Add a Course")
         selected_course = st.selectbox("Choose a course:", course_names)
 
-        if selected_course == "קורס אחר":
-            course_name = st.text_input("Enter course name")
-            course_number = st.text_input("Enter course number")
-            updated_credits = st.number_input("Credit points:", min_value=0.0, step=0.5)
-        elif selected_course in course_names:
-            course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
-            course_name = course_info['course_name']
-            course_number = course_info['course_number']
-            updated_credits = st.number_input("Credit points (you can modify if needed):", value=float(course_info['credit_points']))
-        else:
+        if selected_course not in course_names:
             st.error("קורס זה לא מופיע, נסה להוסיף את 'קורס אחר' וערוך אותו בהתאם")
             return
+
+        course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
+        course_name = course_info['course_name']
+        course_number = course_info['course_number']
+        updated_credits = float(course_info['credit_points'])
 
         taught_in_english = st.checkbox("Course taught in English")
         binary_pass = st.checkbox("Mark as Pass/Fail (Binary Pass)")
@@ -73,10 +69,14 @@ class CourseTrackerUI:
                 if st.button("✏️ Edit Selected"):
                     st.session_state.edit_index = selected_row
 
-            disabled_rows = [] if st.session_state.edit_index is not None else df.index.tolist()
+            df_editable = df.copy()
+            editable_mask = [False] * len(df)
+            if st.session_state.edit_index is not None:
+                editable_mask[st.session_state.edit_index] = True
+
             edited_df = st.data_editor(
-                df,
-                disabled=df.columns if st.session_state.edit_index is None else df.columns.difference(["course_name", "course_number", "credit_points", "english", "binary", "grade"]),
+                df_editable,
+                disabled=~pd.Series(editable_mask),
                 key="editable_table"
             )
 
