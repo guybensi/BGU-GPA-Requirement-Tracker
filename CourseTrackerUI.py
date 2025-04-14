@@ -54,22 +54,27 @@ class CourseTrackerUI:
 
         if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
-            edited_df = pd.DataFrame(st.session_state.user_courses)
+            df = pd.DataFrame(st.session_state.user_courses)
+            df["Delete"] = ["❌"] * len(df)
+            edited_df = st.data_editor(
+                df,
+                num_rows="dynamic",
+                use_container_width=True,
+                key="course_editor",
+                disabled=["Delete"]
+            )
 
-            # אפשרות למחיקה באמצעות כפתור לכל שורה
-            for i, row in edited_df.iterrows():
-                col1, col2 = st.columns([8, 1])
-                with col1:
-                    st.write(row.to_dict())
-                with col2:
-                    if st.button("❌", key=f"delete_{i}"):
-                        st.session_state.user_courses.pop(i)
-                        st.experimental_rerun()
+            delete_index = None
+            for i, row in df.iterrows():
+                delete_key = f"delete_button_{i}"
+                if st.button("❌", key=delete_key):
+                    delete_index = i
 
-            # עדכון הטבלה לאחר עריכות
-            st.markdown("### ✏️ Edit Courses")
-            edited_df = st.data_editor(edited_df, num_rows="dynamic", use_container_width=True, key="course_editor")
-            st.session_state.user_courses = edited_df.to_dict(orient="records")
+            if delete_index is not None:
+                st.session_state.user_courses.pop(delete_index)
+                st.experimental_rerun()
+
+            st.session_state.user_courses = edited_df.drop(columns=["Delete"]).to_dict(orient="records")
 
             if st.button("📊 Calculate Summary"):
                 self.display_summary()
