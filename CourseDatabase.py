@@ -10,7 +10,7 @@ class CourseDatabase:
         CREATE TABLE IF NOT EXISTS courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             course_name TEXT NOT NULL,
-            course_number TEXT,
+            course_number TEXT ,
             credit_points REAL NOT NULL
         );
         """
@@ -32,7 +32,7 @@ class CourseDatabase:
         self.conn.close()
 
 # אתחול בסיס הנתונים וטעינת הקורסים
-if __name__ == "__main__":
+def populate_courses():
     db = CourseDatabase()
 
     courses = {
