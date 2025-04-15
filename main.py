@@ -1,7 +1,6 @@
 from CourseTrackerUI import CourseTrackerUI
-from CourseDatabase import CourseDatabase
 
-
-# שלב שני - הרצת ממשק המשתמש
-tracker = CourseTrackerUI()
-tracker.course_input_form()
+# הרצת ממשק המשתמש
+if __name__ == "__main__":
+    tracker = CourseTrackerUI()
+    tracker.course_input_form()
