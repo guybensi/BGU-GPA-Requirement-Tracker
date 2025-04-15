@@ -57,7 +57,7 @@ class CourseTrackerUI:
         if selected_course == "🆕 קורס אחר / Other":
             course_name = st.text_input("📘 Course Name:")
             course_number = st.text_input("🆔 Course Number:")
-            updated_credits = st.number_input("🎯 Credit Points:", min_value=0.0, value=3.0)
+            updated_credits = st.number_input("🎯 Credit Points:", min_value=0.0, value=3.0, step=0.25)
         else:
             course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
             course_name = course_info['course_name']
@@ -65,7 +65,7 @@ class CourseTrackerUI:
             default_credits = float(course_info['credit_points'])
 
             st.markdown(f"📚 נק״ז לפי התוכנית: `{default_credits}`")
-            updated_credits = st.number_input("🎯 נק״ז בפועל (ניתן לעריכה):", min_value=0.0, value=default_credits)
+            updated_credits = st.number_input("🎯 נק״ז בפועל (ניתן לעריכה):", min_value=0.0, value=default_credits, step=0.25)
 
         taught_in_english = st.checkbox("🌍 Course taught in English")
         binary_pass = st.checkbox("✔️ Pass/Fail (Binary Grade)")
@@ -77,8 +77,10 @@ class CourseTrackerUI:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Add Course", key="add_course"):
-                if any(c['course_number'] == course_number for c in st.session_state.user_courses):
+                if any(c['course_name'] == course_name for c in st.session_state.user_courses):
                     st.warning("⚠️ הקורס כבר קיים ברשימתך")
+                    #allow enter a course without a number
+                    #קפיצות של נקז רק ב0.25
                 else:
                     st.session_state.user_courses.append({
                         "course_name": course_name,
@@ -200,7 +202,7 @@ class CourseTrackerUI:
                         # כותרות השדות לעריכה
                         edited_name = st.text_input("שם הקורס:", value=course['course_name'], key=f"name_{i}")
                         edited_number = st.text_input("מספר הקורס:", value=course['course_number'], key=f"number_{i}")
-                        edited_credits = st.number_input("נק״ז:", min_value=0.0, value=course['credit_points'], key=f"credits_{i}")
+                        edited_credits = st.number_input("נק״ז:", min_value=0.0, value=course['credit_points'], step=0.25,  key=f"credits_{i}")
                         edited_english = st.checkbox("קורס באנגלית", value=course['english'], key=f"english_{i}")
                         edited_binary = st.checkbox("ציון עובר/נכשל", value=course['binary'], key=f"binary_{i}")
                         

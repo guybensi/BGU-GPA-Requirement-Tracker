@@ -10,7 +10,7 @@ class CourseDatabase:
         CREATE TABLE IF NOT EXISTS courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             course_name TEXT NOT NULL,
-            course_number TEXT NOT NULL UNIQUE,
+            course_number TEXT,
             credit_points REAL NOT NULL
         );
         """
@@ -77,6 +77,7 @@ if __name__ == "__main__":
         "373-14401": ("פרויקט בהנדסת תוכנה 1", 4.0),
         "373-14402": ("פרויקט בהנדסת תוכנה 2", 4.0),
         "372-13041": ("מבוא לתקשורת נתונים", 3.5),
+        "000": ("מילואים\התנדבות", 2),
     }
 
     for number, (name, credits) in courses.items():
