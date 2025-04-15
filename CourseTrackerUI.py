@@ -65,20 +65,27 @@ class CourseTrackerUI:
                 st.success("✅ קורס נוסף בהצלחה!")
                 st.rerun()
 
-        # הצגת הקורסים של המשתמש
+         # הצגת הקורסים של המשתמש
         if st.session_state.user_courses:
             st.subheader("📘 Your Courses")
             df = pd.DataFrame(st.session_state.user_courses)
 
-            # הוספת עמודת מחיקה לטבלה
+            # הוספת עמודת מחיקה עם תיבת צ'קבוקס
             df['Delete'] = df.apply(lambda row: st.checkbox(f"Delete {row['course_name']} ({row['course_number']})", key=row['course_number']), axis=1)
 
-            # אפשרות למחוק קורסים שנבחרו
+            # הצגת הטבלה לאחר שמישהי בחרה תיבת צ'קבוקס למחיקה
             for index, row in df.iterrows():
                 if row['Delete']:
-                    st.session_state.user_courses.pop(index)
-                    st.success(f"✅ קורס {row['course_name']} נמחק בהצלחה!")
-                    st.rerun()
+                    confirm_delete = st.confirmation_dialog(
+                        title="Confirm Deletion",
+                        message=f"Are you sure you want to delete the course {row['course_name']}?",
+                        options=["Yes", "No"],
+                        default_option="No"
+                    )
+                    if confirm_delete == "Yes":
+                        st.session_state.user_courses.pop(index)
+                        st.success(f"✅ קורס {row['course_name']} נמחק בהצלחה!")
+                        st.rerun()
 
             # הצגת טבלה עריכה
             edited_df = st.data_editor(
