@@ -37,7 +37,11 @@ class CourseTrackerUI:
             course_info = course_df[course_df['course_name'] == selected_course].iloc[0]
             course_name = course_info['course_name']
             course_number = course_info['course_number']
-            updated_credits = float(course_info['credit_points'])
+            default_credits = float(course_info['credit_points'])
+
+            st.markdown(f"📚 נק״ז לפי התוכנית: `{default_credits}`")
+            updated_credits = st.number_input("🎯 נק״ז בפועל (ניתן לעריכה):", min_value=0.0, value=default_credits)
+
 
         taught_in_english = st.checkbox("🌍 Course taught in English")
         binary_pass = st.checkbox("✔️ Pass/Fail (Binary Grade)")
