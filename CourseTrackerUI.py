@@ -192,8 +192,12 @@ class CourseTrackerUI:
             if "edit_mode" in st.session_state and st.session_state.edit_mode:
                 st.subheader("✏️ עריכת קורסים")
                 
+                # משתנה כדי לדעת אם היו שינויים
+                changes_saved = False
+                
                 for i, course in enumerate(st.session_state.user_courses):
                     with st.expander(f"{course['course_name']} ({course['course_number']})"):
+                        # כותרות השדות לעריכה
                         edited_name = st.text_input("שם הקורס:", value=course['course_name'], key=f"name_{i}")
                         edited_number = st.text_input("מספר הקורס:", value=course['course_number'], key=f"number_{i}")
                         edited_credits = st.number_input("נק״ז:", min_value=0.0, value=course['credit_points'], key=f"credits_{i}")
@@ -205,6 +209,7 @@ class CourseTrackerUI:
                             default_grade = course['grade'] if course['grade'] is not None else 85
                             edited_grade = st.number_input("ציון:", min_value=0, max_value=100, value=default_grade, key=f"grade_{i}")
                         
+                        # כפתור לשמירת השינויים
                         if st.button("שמור שינויים", key=f"save_{i}"):
                             st.session_state.user_courses[i] = {
                                 "course_name": edited_name,
@@ -214,9 +219,11 @@ class CourseTrackerUI:
                                 "binary": edited_binary,
                                 "grade": edited_grade
                             }
+                            changes_saved = True
                             self.save_user_courses()
                             st.success("✅ השינויים נשמרו בהצלחה!")
                             st.rerun()
+
                         # כפתור למחיקת הקורס
                         if st.button("מחק קורס", key=f"delete_{i}"):
                             course_name = course['course_name']
@@ -224,10 +231,18 @@ class CourseTrackerUI:
                             self.save_user_courses()
                             st.success(f"✅ הקורס '{course_name}' נמחק בהצלחה!")
                             st.rerun()
-                            
-                            if st.button("סיום עריכה"):
-                                st.session_state.edit_mode = False
-                                st.rerun()
+
+                # כפתור שמירת כל השינויים
+                if changes_saved:
+                    if st.button("שמור את כל השינויים ויצא"):
+                        st.session_state.edit_mode = False
+                        st.success("✅ כל השינויים נשמרו!")
+                        st.rerun()
+
+                if st.button("סיום עריכה"):
+                    st.session_state.edit_mode = False
+                    st.rerun()
+
 
     def display_summary(self):
         df = pd.DataFrame(st.session_state.user_courses)
