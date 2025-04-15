@@ -217,10 +217,17 @@ class CourseTrackerUI:
                             self.save_user_courses()
                             st.success("✅ השינויים נשמרו בהצלחה!")
                             st.rerun()
-                
-                if st.button("סיום עריכה"):
-                    st.session_state.edit_mode = False
-                    st.rerun()
+                        # כפתור למחיקת הקורס
+                        if st.button("מחק קורס", key=f"delete_{i}"):
+                            course_name = course['course_name']
+                            st.session_state.user_courses.pop(i)
+                            self.save_user_courses()
+                            st.success(f"✅ הקורס '{course_name}' נמחק בהצלחה!")
+                            st.rerun()
+                            
+                            if st.button("סיום עריכה"):
+                                st.session_state.edit_mode = False
+                                st.rerun()
 
     def display_summary(self):
         df = pd.DataFrame(st.session_state.user_courses)
@@ -254,11 +261,12 @@ class CourseTrackerUI:
         st.subheader("📊 סיכום")
         st.markdown(f"### ✅ סך הכל נק״ז: `{total_credits:.1f}`")
         st.markdown(f"### 🌍 נק״ז בקורסים באנגלית: `{english_credits:.1f}`")
-        st.markdown(f"### 📝 נק״ז בקורסים עם ציון עובר/נכשל: `{binary_credits:.1f}`")
-        st.markdown(f"### 📈 ממוצע משוקלל (ללא קורסי עובר/נכשל): `{gpa:.2f}`")
-        
         if english_list:
             st.markdown("**רשימת הקורסים באנגלית:**")
             for name in english_list:
                 st.markdown(f"- {name}")
             
+        st.markdown(f"### 📝 נק״ז בקורסים עם ציון עובר/נכשל: `{binary_credits:.1f}`")
+        st.markdown(f"### 📈 ממוצע משוקלל (ללא קורסי עובר/נכשל): `{gpa:.2f}`")
+        
+        
