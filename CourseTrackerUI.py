@@ -261,31 +261,4 @@ class CourseTrackerUI:
             st.markdown("**רשימת הקורסים באנגלית:**")
             for name in english_list:
                 st.markdown(f"- {name}")
-                
-        # סימולציית שינוי בממוצע
-        st.subheader("🔮 סימולציית שינוי ממוצע")
-        st.markdown("בדוק כיצד ישתנה הממוצע אם תהפוך קורסים נוספים לעובר/נכשל:")
-        
-        # הצג רק קורסים עם ציון (לא בינאריים)
-        simulation_courses = []
-        if not graded_courses.empty:
-            for _, course in graded_courses.iterrows():
-                if st.checkbox(f"הפוך ל-עובר/נכשל: {course['course_name']} (ציון: {course['grade']})", key=f"sim_{course['course_number']}"):
-                    simulation_courses.append(course)
-        
-        if simulation_courses:
-            # חשב ממוצע חדש ללא הקורסים שנבחרו
-            remaining_graded = graded_courses[~graded_courses['course_number'].isin([c['course_number'] for c in simulation_courses])]
             
-            new_gpa = 0
-            if not remaining_graded.empty:
-                remaining_credits = remaining_graded['credit_points'].sum()
-                if remaining_credits > 0:
-                    weighted_sum = (remaining_graded['grade'] * remaining_graded['credit_points']).sum()
-                    new_gpa = weighted_sum / remaining_credits
-            
-            st.markdown(f"### 🚀 הממוצע החדש יהיה: `{new_gpa:.2f}`")
-            
-            removed_credits = sum(course['credit_points'] for course in simulation_courses)
-            st.markdown(f"### 📉 שינוי בממוצע: `{new_gpa - gpa:.2f}`")
-            st.markdown(f"### 📊 נק״ז שיהפכו לעובר/נכשל: `{removed_credits:.1f}`")
