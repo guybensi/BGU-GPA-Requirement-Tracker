@@ -70,31 +70,24 @@ class CourseTrackerUI:
             st.subheader("📘 Your Courses")
             df = pd.DataFrame(st.session_state.user_courses)
 
-            selected_row = st.radio("Select a course to edit/delete:", options=df.index,
-                                    format_func=lambda i: f"{df.loc[i, 'course_name']} ({df.loc[i, 'course_number']})")
+            # הוספת עמודת מחיקה לטבלה
+            df['Delete'] = df.apply(lambda row: st.checkbox(f"Delete {row['course_name']} ({row['course_number']})", key=row['course_number']), axis=1)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("🗑️ Delete Selected"):
-                    st.session_state.user_courses.pop(selected_row)
+            # אפשרות למחוק קורסים שנבחרו
+            for index, row in df.iterrows():
+                if row['Delete']:
+                    st.session_state.user_courses.pop(index)
+                    st.success(f"✅ קורס {row['course_name']} נמחק בהצלחה!")
                     st.rerun()
-            with col2:
-                if st.button("✏️ Edit Selected"):
-                    st.session_state.edit_index = selected_row
 
-            editable_mask = [False] * len(df)
-            if st.session_state.edit_index is not None:
-                editable_mask[st.session_state.edit_index] = True
-
+            # הצגת טבלה עריכה
             edited_df = st.data_editor(
-                df.copy(),
-                disabled=~pd.Series(editable_mask),
+                df.drop(columns=['Delete']),
                 key="editable_table"
             )
 
             if st.button("💾 Save Changes"):
                 st.session_state.user_courses = edited_df.to_dict(orient="records")
-                st.session_state.edit_index = None
                 st.success("🎉 Changes saved!")
                 st.rerun()
 
