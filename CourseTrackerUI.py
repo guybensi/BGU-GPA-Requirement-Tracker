@@ -79,8 +79,7 @@ class CourseTrackerUI:
             if st.button("Add Course", key="add_course"):
                 if any(c['course_name'] == course_name for c in st.session_state.user_courses):
                     st.warning("⚠️ הקורס כבר קיים ברשימתך")
-                    #allow enter a course without a number
-                    #קפיצות של נקז רק ב0.25
+
                 else:
                     st.session_state.user_courses.append({
                         "course_name": course_name,
